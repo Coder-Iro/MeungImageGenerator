@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 SIZE = 128
 FONT_PATH = "./assets/fonts/NanumGothicExtraBold.otf"
 FONT_FACE = Face(FONT_PATH)
-FONT = ImageFont.truetype(FONT_PATH, 100)
+FONT = ImageFont.truetype(FONT_PATH, 85)
 
 app: FastAPI = FastAPI()
 
