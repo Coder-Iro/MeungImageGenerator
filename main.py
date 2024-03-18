@@ -24,7 +24,7 @@ async def get_meung_image(
         return Response(status_code=404)
 
 
-def generate_image(char: str, color: str) -> BytesIO | None:
+def generate_image(char: str, color: str):
 
     if FONT_FACE.get_char_index(char) == 0:
         print("The character does not exist in the font")
