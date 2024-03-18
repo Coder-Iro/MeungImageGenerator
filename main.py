@@ -13,9 +13,9 @@ FONT = ImageFont.truetype(FONT_PATH, 350)
 app: FastAPI = FastAPI()
 
 
-@app.get("/{char}")
+@app.get("/")
 async def get_meung_image(
-    char: str = Path(min_length=1, max_length=1),
+    char: str = Query(min_length=1, max_length=1),
     color: str = Query(pattern=r"[0-9a-fA-F]{6}"),
 ):
     if image := generate_image(char, color):
