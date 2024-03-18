@@ -5,10 +5,10 @@ from fastapi.responses import Response
 from freetype import Face
 from PIL import Image, ImageDraw, ImageFont
 
-SIZE = 512
+SIZE = 128
 FONT_PATH = "./assets/fonts/NanumGothicExtraBold.otf"
 FONT_FACE = Face(FONT_PATH)
-FONT = ImageFont.truetype(FONT_PATH, 350)
+FONT = ImageFont.truetype(FONT_PATH, 100)
 
 app: FastAPI = FastAPI()
 
