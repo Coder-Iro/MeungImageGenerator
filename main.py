@@ -67,7 +67,7 @@ def srgb_to_y(srgb):
     y = 0.2126729 * r_linear + 0.7151522 * g_linear + 0.0721750 * b
 
     if y < 0.022:
-        y += math.pow(0.022 - y, 1.414)  # Threshold adjustment
+        y += (0.022 - y) ** 1.414  # Threshold adjustment
 
     return y
 
@@ -90,7 +90,7 @@ def calculate_contrast(foreground, background):
     if y_bg > y_fg:
         c *= y_bg ** 0.56 - y_fg ** 0.57
     else:
-        c *= math.pow(y_bg, 0.65) - math.pow(y_fg, 0.62)
+        c *= y_bg ** 0.65 - y_fg ** 0.62
 
     if abs(c) < 0.1:
         return 0
