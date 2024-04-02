@@ -64,7 +64,7 @@ def srgb_to_y(srgb):
     g_linear = (srgb[1] / 255) ** 2.4
     b_linear = (srgb[2] / 255) ** 2.4
 
-    y = 0.2126729 * r_linear + 0.7151522 * g_linear + 0.0721750 * b
+    y = 0.2126729 * r_linear + 0.7151522 * g_linear + 0.0721750 * b_linear
 
     if y < 0.022:
         y += (0.022 - y) ** 1.414  # Threshold adjustment
