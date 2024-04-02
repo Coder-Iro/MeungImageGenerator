@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import cast
 
 from fastapi import FastAPI, Path, Query
 from fastapi.responses import Response
@@ -40,9 +41,9 @@ def generate_image(char: str, color: str):
         bbox[1] + bbox[3]
     ) // 2
 
-    rgb_color = (*[int(x, 16) for x in (color[1:3], color[3:5], color[5:7])],)
-    
-    contrast = abs(calculate_contrast((0,0,0),rgb_color)), abs(calculate_contrast((255,255,255),rgb_color))
+    rgb_color = cast(tuple[int, int, int], (*[int(x, 16) for x in (color[1:3], color[3:5], color[5:7])],))
+
+    contrast = abs(calculate_contrast((0, 0, 0), rgb_color)), abs(calculate_contrast((255, 255, 255), rgb_color))
 
     text_color = "black" if contrast[0] > contrast[1] else "white"
 
@@ -51,53 +52,56 @@ def generate_image(char: str, color: str):
     image.save(image_bytes, "png")
     return image_bytes
 
-def srgb_to_y(srgb):
-    """Converts sRGB color components to luminance (Y).
 
-    Args:
-        srgb: A tuple of (R, G, B) color components, each in the range 0-255.
+# calculate contrast
 
-    Returns:
-        The luminance (Y) value.
-    """
-    r_linear = (srgb[0] / 255) ** 2.4
-    g_linear = (srgb[1] / 255) ** 2.4
-    b_linear = (srgb[2] / 255) ** 2.4
+B_EXP = 1.414
+B_THRESH = 0.022
 
-    y = 0.2126729 * r_linear + 0.7151522 * g_linear + 0.0721750 * b_linear
+P_IN = 0.0005
+P_OUT = 0.1
 
-    if y < 0.022:
-        y += (0.022 - y) ** 1.414  # Threshold adjustment
+R_SCALE = 1.14
+W_OFFSET = 0.027
 
-    return y
 
-def calculate_contrast(foreground, background):
-    """Calculates the contrast ratio between foreground and background colors.
+def srgb_to_y(srgb: tuple[int, int, int]) -> float:
+    linear_srgb = map(lambda x: (x / 255) ** 2.4, srgb)
+    return sum(map(lambda x, y: x * y, linear_srgb, [0.2126729, 0.7151522, 0.0721750]))
 
-    Args:
-        foreground: A tuple of (R, G, B) color components, each in the range 0-255.
-        background: A tuple of (R, G, B) color components, each in the range 0-255.
 
-    Returns:
-        The contrast ratio as a value between -100 and 100.
-    """
-    y_fg = srgb_to_y(foreground)
-    y_bg = srgb_to_y(background)
-
-    # Contrast calculation with adjustments
-    c = 1.14
-
-    if y_bg > y_fg:
-        c *= y_bg ** 0.56 - y_fg ** 0.57
+# soft clamp black levels
+def f_clamp(y_c: float) -> float:
+    if y_c >= B_THRESH:
+        return y_c
     else:
-        c *= y_bg ** 0.65 - y_fg ** 0.62
+        return y_c + (B_THRESH - y_c) ** B_EXP
 
-    if abs(c) < 0.1:
-        return 0
-    else:
-        if c > 0:
-            c -= 0.027
-        else:
-            c += 0.027
 
-    return c * 100
+def calculate_contrast(srgb_txt: tuple[int, int, int], srgb_bg: tuple[int, int, int]) -> float:
+    y_txt = f_clamp(srgb_to_y(srgb_txt))
+    y_bg = f_clamp(srgb_to_y(srgb_bg))
+
+    c = 0.0
+
+    # clamp noise then scale
+    if abs(y_bg - y_txt) < P_IN:
+        c = 0.0
+    elif y_txt < y_bg:
+        s_norm = y_bg ** 0.56 - y_txt ** 0.57
+        c = s_norm * R_SCALE
+    elif y_txt > y_bg:
+        s_rev = y_bg ** 0.65 - y_txt ** 0.62
+        c = s_rev * R_SCALE
+
+    s_apc = 0.0
+
+    # clamp minimum contrast then offset
+    if abs(c) < P_OUT:
+        s_apc = 0.0
+    elif c > 0:
+        s_apc = c - W_OFFSET
+    elif c < 0:
+        s_apc = c + W_OFFSET
+
+    return s_apc * 100
