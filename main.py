@@ -1,7 +1,7 @@
 from io import BytesIO
 from typing import cast
 
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, Query
 from fastapi.responses import Response
 from freetype import Face
 from PIL import Image, ImageDraw, ImageFont
